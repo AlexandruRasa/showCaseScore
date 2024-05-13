@@ -1,0 +1,51 @@
+.movie-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.poster-container {
+    margin: 90px;
+    position: relative;
+    transition: tramsform 0.3s;
+    border: 1px solid rgb(255, 255, 255); 
+}
+
+.poster-container:hover {
+    cursor: pointer;
+    transform:scale(1.1)
+}
+
+.poster-container:hover .favouritesBar {
+	opacity: 1;
+}
+
+.poster-img {
+    width: 280px;
+    height: 400px;
+    object-fit: cover;
+}
+
+
+.favouritesBar {
+	position: absolute;
+	background: rgb(0, 0, 0);
+	width: 280px;
+	transition: 0.3s ease;
+	opacity: 0;
+	top: 0;
+	font-size: 20px;
+	padding: 10px;
+	text-align: center;
+}
+
+.movie-title-wrapper {
+    position: relative;
+    text-align: center;
+    max-width: 300px;
+  }
+  
+  .movie-title-wrapper {
+    word-wrap: break-word;
+  }
+  

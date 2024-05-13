@@ -1,0 +1,108 @@
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100vh; 
+  }
+  
+  .auth-container h2 {
+    margin-bottom: 20px;
+  }
+  
+  .form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    margin-right: 10px;
+    width: 80px;
+  }
+  
+  .form-group input {
+    flex: 1;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .error-message {
+    color: rgb(255, 0, 0);
+    margin-bottom: 10px;
+  }
+  .button-container,
+.register-button-container {
+    margin-top: 10px;
+    margin-left: 80px;
+}
+h2 {
+  margin-left: 80px;
+}
+.profile-page-container .button-container {
+    margin-right: 10px;
+}
+
+.profile-page-container .button-container .login-button {
+    font-size: 20px;
+    background-color: #2f2f2f;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.profile-page-container .button-container .login-button:hover {
+    background-color: #1a2a2a;
+}
+
+.profile-page-container .button-container .login-button:focus {
+    box-shadow: none;
+}
+
+.profile-page-container .register-button-container .register-link {
+    color: inherit; /* Use the color inherited from the button */
+    text-decoration: none; /* Remove text underline */
+}
+.button-container {
+  margin-top: 20px;
+}
+
+.button-container button {
+  font-size: 20px;
+  background-color: #2f2f2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button-container button:hover {
+  background-color: #1a2a2a;
+}
+
+.register-button-container {
+  margin-top: 10px;
+}
+
+.register-button-container .register-link {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-button-container .register-link:hover {
+  text-decoration: underline;
+}
+
+  

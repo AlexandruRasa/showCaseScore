@@ -1,0 +1,86 @@
+body {
+  background-color: #151515;
+  margin: 0;
+  padding: 0;
+  color: rgb(255, 255, 255);
+}
+
+.movie-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  padding: 20px;
+  width: 65%;
+  margin: 0 auto;
+}
+
+
+.movie-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.title-rating-container {
+  width: 1150px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+
+.poster-youtube-container {
+  display: flex;
+  border: 2px solid rgb(255, 255, 255);
+  padding: 5px;
+  border-radius: 10px;
+}
+
+
+.poster-container {
+  margin-right: 20px;
+}
+
+.youtube-container {
+  padding: 3%;
+  width: 70%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.movie-details-container {
+  margin-top: 30px;
+  text-align: left;
+}
+
+.movie-title {
+  font-family: "Arial", sans-serif;
+  font-weight: bold;
+  font-size: 24px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  border-radius: 5px;
+  padding: 10px;
+  color: #ffffff;
+}
+
+.reviewsList button {
+  font-size: 12px;
+  background-color: #2f2f2f;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+}
+
+h2 {
+  text-align: right;
+}
+
+h3, h4, h5 {
+  text-align: left;
+  margin: 5px 0; 
+  padding: 1%;
+}
