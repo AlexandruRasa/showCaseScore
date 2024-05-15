@@ -29,8 +29,8 @@ public class CallApi {
     private final String URL_TMDB_LIST_POPULAR = "https://api.themoviedb.org/3/movie/popular";
     private final String URL_TMDB_LIST_TOP_RATED = "https://api.themoviedb.org/3/movie/top_rated";
     private final String URL_TMDB_EXTERNAL_LINKS = "https://api.themoviedb.org/3/movie/";
-    private final String API_KEY_TMDB = "2224793957f314cd1f90255da31626fe";
-    private final String API_KEY_OMDB = "934f342f";
+    private final String API_KEY_TMDB = "API_KEY_TMDB";
+    private final String API_KEY_OMDB = "API_KEY_OMDB";
     private final RestTemplate restTemplate;
 
     @Autowired
