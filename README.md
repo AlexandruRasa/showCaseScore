@@ -15,7 +15,4 @@ The app integrates with both the [OMDb](https://www.omdbapi.com/) and
 
 ## Demo
 
-<video width="600" controls autoplay loop>
-  <source src="https://github.com/AlexandruRasa/showCaseScore/assets/114824311/24347c94-e6c1-4b4e-8d42-bb2ea8caa51c" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![2024-05-15 15-55-57](https://github.com/AlexandruRasa/showCaseScore/assets/114824311/6857c3dd-8b98-4d4f-81a1-af2c011ffd5a)
