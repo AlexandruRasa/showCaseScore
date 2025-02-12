@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import YouTube from 'react-youtube';
 import { useParams } from 'react-router-dom';
 import { deleteReview, fetchMovieData, saveReview } from '../api/MovieApi';
@@ -13,66 +13,68 @@ const MoviePage = () => {
   const [reviewFormData, setReviewFormData] = useState({
     note: '',
     text: '',
-});
+  });
 
-useEffect(() => {
-  fetchData();
-  window.scrollTo(0, 0);
-}, [imdbId]);
+  const fetchData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const data = await fetchMovieData(imdbId, token);
+      setMovieData(data);
+      setLoading(false);
+      const response = localStorage.getItem("userData");
+      const userData = JSON.parse(response);
+      setPageRole(userData.role);
+    } catch (error) {
+      setError(error.message);
+      setLoading(false);
+    }
+  }, [imdbId]); 
 
-const fetchData = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const data = await fetchMovieData(imdbId, token);
-    setMovieData(data);
-    setLoading(false);
-    console.log(data);
-    const response = localStorage.getItem("userData");
-    const userData = JSON.parse(response);
-    setPageRole(userData.role);
-    console.log(pageRole);
-  } catch (error) {
-    setError(error.message);
-    setLoading(false);
-  }
-};
-
-const handleInputChange = (e) => {
-  const { name, value } = e.target;
-  setReviewFormData({ ...reviewFormData, [name]: value });
-};
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const token = localStorage.getItem("token");
-    const response = localStorage.getItem("userData");
-    const userData = JSON.parse(response);
-    await saveReview(imdbId, userData.id, reviewFormData, token);
-    setReviewFormData({
-      rating: '',
-      text: '',
-    });
+  useEffect(() => {
     fetchData();
-  } catch (error) {
-    console.error('Error registering review:', error);
-    alert('An error occurred while registering review');
-  }
-};
+    window.scrollTo(0, 0);
+  }, [fetchData]);
 
-const handleDelete = async (userEmail) => {
-  try {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setReviewFormData({ ...reviewFormData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = localStorage.getItem("userData");
+      const userData = JSON.parse(response);
+      await saveReview(imdbId, userData.id, reviewFormData, token);
+      setReviewFormData({
+        rating: '',
+        text: '',
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error registering review:', error);
+      alert('An error occurred while registering review');
+    }
+  };
+
+  const handleDelete = async (userEmail) => {
+    try {
       const confirmDelete = window.confirm("Are you sure you want to delete this review ?");
       if (!confirmDelete) {
-          return;
+        return;
       }
       const token = localStorage.getItem("token");
       await deleteReview(imdbId, userEmail, token);
       fetchData();
-  } catch (error) {
+    } catch (error) {
       console.error('Error deleting review:', error);
-  }
-};
+    }
+  };
+
+  const isValidYouTubeVideoId = (videoId) => {
+    return videoId && typeof videoId === 'string' && videoId.length === 11;
+  };
 
   if (loading) {
     return (
@@ -81,7 +83,7 @@ const handleDelete = async (userEmail) => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -89,7 +91,6 @@ const handleDelete = async (userEmail) => {
       </div>
     );
   }
-  
 
   return (
     <div>
@@ -106,7 +107,7 @@ const handleDelete = async (userEmail) => {
               <img src={movieData.Poster} alt={movieData.Title} />
             </div>
             <div className="youtube-container">
-              {movieData.Trailer && (
+              {movieData.Trailer && isValidYouTubeVideoId(movieData.Trailer) && (
                 <YouTube videoId={movieData.Trailer} opts={{ playerVars: { autoplay: 1, mute: 1 } }} />
               )}
             </div>
@@ -144,10 +145,11 @@ const handleDelete = async (userEmail) => {
                       {review.rating}: {review.userEmail}: {review.text}
                       {pageRole === "ADMIN" && (
                         <button 
-                        onClick={() => handleDelete(review.userEmail)}
-                        style={{ fontSize: '12px', float: 'right'  }} 
-                        className="edit-button">Delete
-                      </button>
+                          onClick={() => handleDelete(review.userEmail)}
+                          style={{ fontSize: '12px', float: 'right' }} 
+                          className="edit-button">
+                          Delete
+                        </button>
                       )}
                     </li>
                   ))}
@@ -162,7 +164,7 @@ const handleDelete = async (userEmail) => {
                   <label htmlFor="reviewText">Review:</label><br />
                   <textarea id="reviewText" name="text" rows="5" cols="70" value={reviewFormData.text}  style={{ fontSize: '14px'}}  onChange={handleInputChange} required></textarea><br />
                   <button type="submit">Submit Review</button>
-                </form>
+              </form>
             </div>
           </div>
         </div>

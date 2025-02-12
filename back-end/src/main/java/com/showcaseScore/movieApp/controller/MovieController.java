@@ -18,17 +18,12 @@ import java.util.NoSuchElementException;
 @RequestMapping("/movie")
 public class MovieController {
 
-    @Autowired
     private final MovieService movieService;
 
     @GetMapping("/get/{imdbId}")
     public ResponseEntity<MovieDTO> getMovieByTitle(@PathVariable String imdbId) {
         MovieDTO movie = movieService.getMovie(imdbId);
-        if (movie != null) {
-            return ResponseEntity.ok(movie);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(movie);
     }
 
     @GetMapping("/genre/{genre}")

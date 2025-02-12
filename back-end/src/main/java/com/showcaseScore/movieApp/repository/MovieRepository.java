@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface MovieRepository extends JpaRepository<Movie, Integer> {
 
     Optional<Movie> findByImdbID(String imdbId);
-
+    boolean existsByImdbID(String imdbId);
     @Query("SELECT movie FROM MOVIE movie WHERE LOWER(movie.genre) LIKE %:lowercaseKeyword%")
     List<Movie> findAllByGenre(String lowercaseKeyword);
 

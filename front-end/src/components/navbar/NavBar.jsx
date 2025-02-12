@@ -27,8 +27,13 @@ const NavBar = ({ setSearchVal, onLogout }) => {
                     </Link>
                 </div>
                 {location.pathname === '/' && <SearchBar  setSearchVal={setSearchVal} />}
+                {location.pathname !== '/' && (
+                    <Link to="/" onClick={resetSearchVal}>
+                        <button className="button">Search</button>
+                    </Link>
+                )}
                 <div>
-                    <Link to="/user/profile" className="button-link">
+                    <Link to="/user/profile" className="search-button-link">
                         <button className="button">Account</button>
                     </Link>
                     <button className="button" onClick={onLogout}>Logout</button>

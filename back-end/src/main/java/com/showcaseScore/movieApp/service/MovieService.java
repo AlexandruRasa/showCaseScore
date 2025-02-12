@@ -2,6 +2,8 @@ package com.showcaseScore.movieApp.service;
 
 import com.github.javafaker.Faker;
 import com.showcaseScore.movieApp.dtos.MovieDTO;
+import com.showcaseScore.movieApp.exception.ApiCallException;
+import com.showcaseScore.movieApp.exception.MoviesNotFoundException;
 import com.showcaseScore.movieApp.model.Movie;
 import com.showcaseScore.movieApp.model.mapper.ModelMapper;
 import com.showcaseScore.movieApp.repository.MovieRepository;
@@ -26,24 +28,50 @@ public class MovieService {
     private final ReviewService reviewService;
     private final CallApi callApi;
 
-    public MovieDTO getMovie(String imdbId) {
+    /**
+     * Retrieves a movie by its IMDb ID. If the movie does not exist in the database,
+     * it fetches the movie from an external API and saves it.
+     *
+     * @param imdbId The IMDb ID of the movie.
+     * @return The movie DTO.
+     * @throws EntityNotFoundException If the movie is not found in the database or external API.
+     * @throws IllegalArgumentException If the IMDb ID is null or empty.
+     */
+    public MovieDTO getMovie(String imdbId) throws EntityNotFoundException, IllegalArgumentException {
+        if (imdbId == null || imdbId.trim().isEmpty()) {
+            throw new IllegalArgumentException("IMDb ID cannot be null or empty.");
+        }
+        if (!movieRepository.existsByImdbID(imdbId)) {
+            saveMovieByImdbId(imdbId);
+        }
         Movie movie = movieRepository.findByImdbID(imdbId)
-                .orElseGet(() -> {
-                    saveMovieByImdbId(imdbId);
-                    return movieRepository.findByImdbID(imdbId)
-                            .orElseThrow(EntityNotFoundException::new);
-                });
+                .orElseThrow(EntityNotFoundException::new);
         MovieDTO movieDTO = ModelMapper.map(movie, MovieDTO.class);
         movieDTO.setReviews(reviewService.getReviewsForMovie(movie.getId()));
         return movieDTO;
     }
 
-    public List<MovieDTO> getMoviesByGenre(String genreKeyword) {
-        return movieRepository.findAllByGenre(genreKeyword).stream()
+    /**
+     * Retrieves a list of movies by genre.
+     *
+     * @param genreKeyword The genre to search for.
+     * @return A list of movie DTOs.
+     * @throws MoviesNotFoundException If no movies are found for the given genre.
+     * @throws IllegalArgumentException If the genre keyword is null or empty.
+     */
+    public List<MovieDTO> getMoviesByGenre(String genreKeyword) throws MoviesNotFoundException,
+            IllegalArgumentException {
+        if (genreKeyword == null || genreKeyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("Genre keyword cannot be null or empty.");
+        }
+        List<Movie> movies = movieRepository.findAllByGenre(genreKeyword.toLowerCase());
+        if (movies.isEmpty()) {
+            throw new MoviesNotFoundException("No movies found for genre: " + genreKeyword);
+        }
+        return movies.stream()
                 .map(movie -> ModelMapper.map(movie, MovieDTO.class))
                 .collect(Collectors.toList());
     }
-
 
     public List<MovieDTO> getMoviesByAwards() {
         return movieRepository.findAllByAwards("win", "won").stream()
@@ -63,17 +91,26 @@ public class MovieService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Saves a movie to the database by fetching its details from an external API using the IMDb ID.
+     *
+     * @param imdbId The IMDb ID of the movie.
+     * @throws ApiCallException If the API call to fetch movie data fails.
+     * @throws IllegalArgumentException If the IMDb ID is null or empty.
+     */
     @Transactional
-    public void saveMovieByImdbId(String imdbId) {
+    public void saveMovieByImdbId(String imdbId) throws ApiCallException, IllegalArgumentException {
+        if (imdbId == null || imdbId.trim().isEmpty()) {
+            throw new IllegalArgumentException("IMDb ID cannot be null or empty.");
+        }
         Optional<Movie> existingMovie = movieRepository.findByImdbID(imdbId);
         if (existingMovie.isPresent()) {
-            log.info("saveMovieByImdbId ---> Movie with IMDb ID " + imdbId + " already exists");
+            log.info("Movie with IMDb ID {} already exists", imdbId);
             return;
         }
         MovieDTO movieDto = callApi.getMovieFromOmdb(imdbId);
         if (movieDto.getImdbID() == null) {
-            log.error("saveMovieByImdbId ---> Error fetching movie data from OMDB for IMDb ID " + imdbId);
-            return;
+            throw new ApiCallException("Failed to fetch movie data from OMDB for IMDb ID: " + imdbId);
         }
         String urlTmdbTrailer;
         if (movieDto.getYear().contains("-") || movieDto.getYear().contains("–")) {
@@ -100,15 +137,25 @@ public class MovieService {
         List<String> ids = callApi.getImdbIdsFromTmdb(id);
         ids.forEach(this::saveMovieByImdbId);
     }
+
+    /**
+     * Deletes a movie from the database by its IMDb ID.
+     *
+     * @param imdbId The IMDb ID of the movie.
+     * @throws EntityNotFoundException If the movie is not found in the database.
+     * @throws IllegalArgumentException If the IMDb ID is null or empty.
+     */
     @Transactional
-    public void deleteMovie(String imdbId) {
+    public void deleteMovie(String imdbId) throws EntityNotFoundException, IllegalArgumentException {
+        if (imdbId == null || imdbId.trim().isEmpty()) {
+            throw new IllegalArgumentException("IMDb ID cannot be null or empty.");
+        }
         Optional<Movie> existingMovie = movieRepository.findByImdbID(imdbId);
         if (existingMovie.isEmpty()) {
-            log.error("deleteMovie ---> Movie with IMDb ID " + imdbId + " does not exist");
-            return;
+            throw new EntityNotFoundException("Movie with IMDb ID " + imdbId + " does not exist.");
         }
         movieRepository.delete(existingMovie.get());
-        log.info("deleteMovie ---> Movie with IMDb ID " + imdbId + " has been deleted");
+        log.info("Movie with IMDb ID {} has been deleted", imdbId);
     }
 
     @Transactional
