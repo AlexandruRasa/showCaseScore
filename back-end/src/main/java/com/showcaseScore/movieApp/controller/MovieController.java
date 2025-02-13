@@ -3,7 +3,6 @@ package com.showcaseScore.movieApp.controller;
 import com.showcaseScore.movieApp.dtos.MovieDTO;
 import com.showcaseScore.movieApp.service.MovieService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

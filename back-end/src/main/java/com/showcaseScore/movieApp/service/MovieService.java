@@ -45,7 +45,7 @@ public class MovieService {
             saveMovieByImdbId(imdbId);
         }
         Movie movie = movieRepository.findByImdbID(imdbId)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> new EntityNotFoundException("Movie not found with IMDb ID: " + imdbId));
         MovieDTO movieDTO = ModelMapper.map(movie, MovieDTO.class);
         movieDTO.setReviews(reviewService.getReviewsForMovie(movie.getId()));
         return movieDTO;
@@ -73,20 +73,32 @@ public class MovieService {
                 .collect(Collectors.toList());
     }
 
-    public List<MovieDTO> getMoviesByAwards() {
-        return movieRepository.findAllByAwards("win", "won").stream()
+    public List<MovieDTO> getMoviesByAwards() throws MoviesNotFoundException {
+        List<Movie> movies = movieRepository.findAllByAwards("win", "won");
+        if (movies.isEmpty()) {
+            throw new MoviesNotFoundException("No movies found with awards.");
+        }
+        return movies.stream()
                 .map(movie -> ModelMapper.map(movie, MovieDTO.class))
                 .collect(Collectors.toList());
     }
 
-    public List<MovieDTO> getMoviesByBoxOffice() {
-        return movieRepository.findAllOrderByBoxOffice().stream()
+    public List<MovieDTO> getMoviesByBoxOffice() throws MoviesNotFoundException {
+        List<Movie> movies = movieRepository.findAllOrderByBoxOffice();
+        if (movies.isEmpty()) {
+            throw new MoviesNotFoundException("No movies found with box office data.");
+        }
+        return movies.stream()
                 .map(movie -> ModelMapper.map(movie, MovieDTO.class))
                 .collect(Collectors.toList());
     }
 
-    public List<MovieDTO> getMoviesByRating() {
-        return movieRepository.findAllByImdbRating().stream()
+    public List<MovieDTO> getMoviesByRating() throws MoviesNotFoundException {
+        List<Movie> movies = movieRepository.findAllByImdbRating();
+        if (movies.isEmpty()) {
+            throw new MoviesNotFoundException("No movies found with IMDb ratings.");
+        }
+        return movies.stream()
                 .map(movie -> ModelMapper.map(movie, MovieDTO.class))
                 .collect(Collectors.toList());
     }
@@ -99,26 +111,19 @@ public class MovieService {
      * @throws IllegalArgumentException If the IMDb ID is null or empty.
      */
     @Transactional
-    public void saveMovieByImdbId(String imdbId) throws ApiCallException, IllegalArgumentException {
-        if (imdbId == null || imdbId.trim().isEmpty()) {
-            throw new IllegalArgumentException("IMDb ID cannot be null or empty.");
-        }
-        Optional<Movie> existingMovie = movieRepository.findByImdbID(imdbId);
-        if (existingMovie.isPresent()) {
-            log.info("Movie with IMDb ID {} already exists", imdbId);
-            return;
-        }
-        MovieDTO movieDto = callApi.getMovieFromOmdb(imdbId);
+    public void saveMovieByImdbId(String imdbId) throws ApiCallException {
+        MovieDTO movieDto = callApi.getMovieFromOMDB(imdbId);
         if (movieDto.getImdbID() == null) {
             throw new ApiCallException("Failed to fetch movie data from OMDB for IMDb ID: " + imdbId);
         }
-        String urlTmdbTrailer;
-        if (movieDto.getYear().contains("-") || movieDto.getYear().contains("–")) {
-            urlTmdbTrailer = "https://api.themoviedb.org/3/tv/";
-        } else {
-            urlTmdbTrailer = "https://api.themoviedb.org/3/movie/";
+        if (movieRepository.existsByImdbID(imdbId)) {
+            log.info("Movie with IMDb ID {} already exists. Skipping save.", imdbId);
+            return;
         }
-        String trailer = callApi.getTrailerFromTmdb(imdbId, urlTmdbTrailer);
+        String urlTMDBTrailer = movieDto.getYear().contains("-") || movieDto.getYear().contains("–")
+                ? "https://api.themoviedb.org/3/tv/"
+                : "https://api.themoviedb.org/3/movie/";
+        String trailer = callApi.getTrailerFromTMDB(imdbId, urlTMDBTrailer);
         if (movieDto.getDirector().equals("N/A")) {
             Faker faker = new Faker();
             movieDto.setDirector(faker.harryPotter().character());
@@ -134,7 +139,7 @@ public class MovieService {
 
     @Transactional
     public void saveMovieList(Integer id) {
-        List<String> ids = callApi.getImdbIdsFromTmdb(id);
+        List<String> ids = callApi.getImdbIdsFromTMDB(id);
         ids.forEach(this::saveMovieByImdbId);
     }
 

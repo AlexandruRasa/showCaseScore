@@ -1,11 +1,13 @@
 package com.showcaseScore.movieApp.util;
 
 import com.showcaseScore.movieApp.dtos.MovieDTO;
+import com.showcaseScore.movieApp.exception.ApiCallException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -13,9 +15,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,232 +26,181 @@ import java.util.stream.IntStream;
 @Slf4j
 public class CallApi {
 
-    public static final String URL_OMDB = "https://www.omdbapi.com/";
-    public static final String URL_TMDB_IMDB = "https://api.themoviedb.org/3/find/";
-    private static final String URL_TMDB_LIST_POPULAR = "https://api.themoviedb.org/3/movie/popular";
-    private static final String URL_TMDB_LIST_TOP_RATED = "https://api.themoviedb.org/3/movie/top_rated";
-    private static final String URL_TMDB_EXTERNAL_LINKS = "https://api.themoviedb.org/3/movie/";
-    private static final String API_KEY_TMDB = "2224793957f314cd1f90255da31626fe";
-    private static final String API_KEY_OMDB = "934f342f";
-    private  final RestTemplate restTemplate;
+    private final String OMDBUrl;
+    private final String TMDBUrlImdb;
+    private final String TMDBUrlPopular;
+    private final String TMDBUrlTopRated;
+    private final String TMDBUrlExternalLinks;
+    private final String TMDBApiKey;
+    private final String OMDBApiKey;
+    private final RestTemplate restTemplate;
 
     @Autowired
-    public CallApi(RestTemplate restTemplate) {
+    public CallApi(
+            @Value("${OMDB.url}") String OMDBUrl,
+            @Value("${TMDB.url.imdb}") String TMDBUrlImdb,
+            @Value("${TMDB.url.popular}") String TMDBUrlPopular,
+            @Value("${TMDB.url.top-rated}") String TMDBUrlTopRated,
+            @Value("${TMDB.url.external-links}") String TMDBUrlExternalLinks,
+            @Value("${TMDB.api.key}") String TMDBApiKey,
+            @Value("${OMDB.api.key}") String OMDBApiKey,
+            RestTemplate restTemplate) {
+        this.OMDBUrl = OMDBUrl;
+        this.TMDBUrlImdb = TMDBUrlImdb;
+        this.TMDBUrlPopular = TMDBUrlPopular;
+        this.TMDBUrlTopRated = TMDBUrlTopRated;
+        this.TMDBUrlExternalLinks = TMDBUrlExternalLinks;
+        this.TMDBApiKey = TMDBApiKey;
+        this.OMDBApiKey = OMDBApiKey;
         this.restTemplate = restTemplate;
     }
 
-
-    public MovieDTO getMovieFromOmdb(String imdbId) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(URL_OMDB)
+    public MovieDTO getMovieFromOMDB(String imdbId) {
+        log.info("Fetching movie data from OMDB for IMDb ID: {}", imdbId);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(OMDBUrl)
                 .queryParam("i", imdbId)
-                .queryParam("apikey", API_KEY_OMDB)
+                .queryParam("apikey", OMDBApiKey)
                 .queryParam("plot", "full");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<MovieDTO> response = restTemplate
-                .exchange(builder.toUriString(), HttpMethod.GET, entity, MovieDTO.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            MovieDTO movieDto = response.getBody();
-            if (movieDto != null) {
-                return movieDto;
-            } else {
-                log.error("getMovieFromOmdb ---> Error: No movie data found in response");
-            }
-        } else {
-            log.error("getMovieFromOmdb ---> Error: {} {}", response.getStatusCodeValue(), response.getBody());
+        MovieDTO movieDto = executeHttpGetRequest(builder.toUriString(), MovieDTO.class);
+        if (movieDto == null) {
+            log.error("Failed to fetch movie data from OMDB for IMDb ID: {}", imdbId);
+            throw new ApiCallException("Failed to fetch movie data from OMDB for IMDb ID: " + imdbId);
         }
-        return null;
+        return movieDto;
     }
 
-    public String getTrailerFromTmdb(String imdbId, String urlTmdbTrailer) {
-        Integer movieId = getMovieIdFromTmdb(imdbId);
+    public String getTrailerFromTMDB(String imdbId, String urlTMDBTrailer) {
+        Integer movieId = getMovieIdFromTMDB(imdbId);
         if (movieId == -1) {
             return null;
         }
+
         UriComponentsBuilder builder;
-        log.info("ULR before if block --->" + urlTmdbTrailer);
-        if (urlTmdbTrailer.contains("https://api.themoviedb.org/3/tv/")) {
-            builder = UriComponentsBuilder.fromUriString(urlTmdbTrailer + movieId + "/season/" + "1" + "/videos")
-                    .queryParam("api_key", API_KEY_TMDB);
-            log.info("URL --->" + urlTmdbTrailer + movieId + "/season/" + "1" + "/videos");
+        if (urlTMDBTrailer.contains("https://api.themoviedb.org/3/tv/")) {
+            builder = UriComponentsBuilder.fromUriString(urlTMDBTrailer + movieId + "/season/" + "1" + "/videos")
+                    .queryParam("api_key", TMDBApiKey);
         } else {
-            builder = UriComponentsBuilder.fromUriString(urlTmdbTrailer + movieId + "/videos")
-                    .queryParam("api_key", API_KEY_TMDB);
-            log.info("URL --->" + urlTmdbTrailer + movieId + "/videos");
+            builder = UriComponentsBuilder.fromUriString(urlTMDBTrailer + movieId + "/videos")
+                    .queryParam("api_key", TMDBApiKey);
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate
-                .exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            String responseBody = response.getBody();
-            String key = extractTrailerKey(responseBody);
-            log.info("getTrailerFromTmdb ---> " + key);
-            return key;
-        } else {
-            log.info("getTrailerFromTmdb ---> Error: " + response.getStatusCodeValue());
-            return null;
-        }
+        String responseBody = executeHttpGetRequest(builder.toUriString(), String.class);
+        return responseBody != null ? extractTrailerKey(responseBody) : null;
     }
 
     private String extractTrailerKey(String responseBody) {
-        try {
-            JSONObject root = new JSONObject(responseBody);
+        return parseJson(responseBody, root -> {
             JSONArray results = root.getJSONArray("results");
-
             Predicate<JSONObject> isTrailerOfficial = result ->
                     "Trailer".equals(result.optString("type"));
-
             return IntStream.range(0, results.length())
                     .mapToObj(results::getJSONObject)
                     .filter(isTrailerOfficial)
                     .map(result -> result.optString("key"))
                     .findFirst()
                     .orElse(null);
-
-        } catch (Exception e) {
-            log.error("extractTrailerKey ---> Error parsing JSON: " + e.getMessage());
-            return null;
-        }
+        });
     }
 
-    private Integer getMovieIdFromTmdb(String imdbId) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(URL_TMDB_IMDB + imdbId)
+    private Integer getMovieIdFromTMDB(String imdbId) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(TMDBUrlImdb + imdbId)
                 .queryParam("external_source", "imdb_id")
-                .queryParam("api_key", API_KEY_TMDB);
+                .queryParam("api_key", TMDBApiKey);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<String> response = restTemplate
-                .exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
-
-        if (response.getStatusCode() == HttpStatus.OK) {
-            String responseBody = response.getBody();
-            Integer movieId = parseMovieId(responseBody);
-            log.info("getMovieIdFromTmdb ---> " + movieId);
-            return movieId;
-        } else {
-            log.info("Error: " + response.getStatusCodeValue());
-            return -1;
-        }
+        String responseBody = executeHttpGetRequest(builder.toUriString(), String.class);
+        return responseBody != null ? parseMovieId(responseBody) : -1;
     }
 
     private Integer parseMovieId(String responseBody) {
-        log.info("parseMovieId ---> " + responseBody);
-        try {
-            JSONObject root = new JSONObject(responseBody);
+        return parseJson(responseBody, root -> {
             JSONArray movieResults = root.optJSONArray("movie_results");
             JSONArray tvResults = root.optJSONArray("tv_results");
             movieResults = (movieResults == null || movieResults.length() == 0) ? tvResults : movieResults;
-            log.info("MOVIERESULTS: --->" + movieResults);
             if (movieResults != null && movieResults.length() > 0) {
                 JSONObject firstMovie = movieResults.getJSONObject(0);
                 return firstMovie.optInt("id", -1);
             } else {
-                log.error("parseMovieId ---> No movie results found in JSON response");
+                log.error("No movie results found in JSON response");
                 return -1;
             }
-        } catch (JSONException e) {
-            log.error("parseMovieId ---> Error parsing JSON: {}", e.getMessage());
-            return -1;
-        }
+        });
     }
 
-    public List<String> getImdbIdsFromTmdb(Integer id) {
-        List<String> allTmdbIds = new ArrayList<>();
+    public List<String> getImdbIdsFromTMDB(Integer id) {
+        List<String> allTMDBIds = new ArrayList<>();
         List<String> imdbIds = new ArrayList<>();
 
         for (int page = 1; page < 3; page++) {
             try {
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                HttpEntity<String> entity = new HttpEntity<>(headers);
                 UriComponentsBuilder builder;
-
                 if (id == 1) {
-                    builder = UriComponentsBuilder.fromUriString(URL_TMDB_LIST_TOP_RATED)
+                    builder = UriComponentsBuilder.fromUriString(TMDBUrlTopRated)
                             .queryParam("language", "en-US")
                             .queryParam("page", page)
-                            .queryParam("api_key", API_KEY_TMDB);
+                            .queryParam("api_key", TMDBApiKey);
                 } else {
-                    builder = UriComponentsBuilder.fromUriString(URL_TMDB_LIST_POPULAR)
+                    builder = UriComponentsBuilder.fromUriString(TMDBUrlPopular)
                             .queryParam("language", "en-US")
                             .queryParam("page", page)
-                            .queryParam("api_key", API_KEY_TMDB);
+                            .queryParam("api_key", TMDBApiKey);
                 }
-                ResponseEntity<String> response = restTemplate.exchange(
-                        builder.toUriString(),
-                        HttpMethod.GET,
-                        entity,
-                        String.class
-                );
-                log.info("getImdbIdsFromTmdb ---> " + response);
 
-                if (response.getStatusCode() == HttpStatus.OK) {
-                    String responseBody = response.getBody();
-                    List<String> tmdbIds = extractTmdbIdsFromTmdbList(responseBody);
-                    allTmdbIds.addAll(tmdbIds);
-                    for (String i: allTmdbIds) {
-                        imdbIds.add(extractImdbIdFromTmdb(i));
+                String responseBody = executeHttpGetRequest(builder.toUriString(), String.class);
+                if (responseBody != null) {
+                    List<String> TMDBIds = extractTMDBIdsFromTMDBList(responseBody);
+                    allTMDBIds.addAll(TMDBIds);
+                    for (String TMDBId : allTMDBIds) {
+                        imdbIds.add(extractImdbIdFromTMDB(TMDBId));
                     }
-                    log.info("Page " + page + " IMDb IDs: " + tmdbIds);
-                } else {
-                    log.info("Error: " + response.getStatusCodeValue());
+                    log.info("Page {} IMDb IDs: {}", page, TMDBIds);
                 }
             } catch (RestClientException e) {
-                log.error("getImdbIdsFromTmdb ---> Error fetching data from TMDB: " + e.getMessage());
+                log.error("Error fetching data from TMDB: {}", e.getMessage());
             }
         }
         return imdbIds;
     }
 
-    private List<String> extractTmdbIdsFromTmdbList(String responseBody) {
-        try {
-            JSONObject root = new JSONObject(responseBody);
+    private List<String> extractTMDBIdsFromTMDBList(String responseBody) {
+        return parseJson(responseBody, root -> {
             JSONArray results = root.getJSONArray("results");
-
             return IntStream.range(0, results.length())
                     .mapToObj(results::getJSONObject)
                     .map(result -> result.optString("id"))
                     .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("extractTmdbIdsFromTmdbList ---> Error parsing JSON: " + e.getMessage());
-            return Collections.emptyList();
-        }
+        });
     }
 
-    public String extractImdbIdFromTmdb(String tmdbId) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(URL_TMDB_EXTERNAL_LINKS + tmdbId + "/external_ids")
-                .queryParam("api_key", API_KEY_TMDB);
+    public String extractImdbIdFromTMDB(String TMDBId) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(TMDBUrlExternalLinks + TMDBId + "/external_ids")
+                .queryParam("api_key", TMDBApiKey);
 
+        String responseBody = executeHttpGetRequest(builder.toUriString(), String.class);
+        return responseBody != null ? parseJson(responseBody, root -> root.getString("imdb_id")) : null;
+    }
+
+    private <T> T executeHttpGetRequest(String url, Class<T> responseType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate
-                .exchange(builder.toUriString(), HttpMethod.GET, entity, String.class);
+        ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.GET, entity, responseType);
 
         if (response.getStatusCode() == HttpStatus.OK) {
-            try {
-                JSONObject jsonResponse = new JSONObject(response.getBody());
-                String imdbId = jsonResponse.getString("imdb_id");
-                log.info("extractImdbIdFromTmdb ---> " + imdbId);
-                return imdbId;
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
+            return response.getBody();
         } else {
-            log.error("extractImdbIdFromTmdb ---> Error: " + response.getStatusCodeValue());
+            log.error("HTTP request failed: {} {}", response.getStatusCodeValue(), response.getBody());
+            return null;
+        }
+    }
+
+    private <T> T parseJson(String json, Function<JSONObject, T> parser) {
+        try {
+            JSONObject root = new JSONObject(json);
+            return parser.apply(root);
+        } catch (JSONException e) {
+            log.error("Error parsing JSON: {}", e.getMessage());
             return null;
         }
     }

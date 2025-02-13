@@ -1,0 +1,84 @@
+.movie-list {
+    list-style-type: none;
+}
+
+.movie-list-options{
+    width: 55%;
+    margin: 0 auto;
+    padding: 1%;
+    display: flex;
+    align-items: center;
+}
+
+.container-list {
+    width: 55%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+}
+
+.row-container {
+    display: inline-block; 
+    unicode-bidi: isolate;
+}
+
+.selectBox{
+    border-radius: 5px;
+    font-size: 20px;
+    width: 200px;
+}
+
+.poster-container-list,
+.details-container-list {
+    padding: 2%;
+    display: inline-block;
+    vertical-align: top; 
+    margin-right: 70px; 
+}
+
+.poster-container-list img {
+    transition: tramsform 0.3s;
+    border: 1px solid rgb(255, 255, 255); 
+    width: 240px;
+    height: 350px;
+    object-fit: cover;
+}
+
+.poster-container-list img:hover {
+    cursor: pointer;
+    transform:scale(1.1)
+}
+
+.pagination {
+    width: 55%;
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+}
+
+.pagination button {
+    font-size: 16px;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.pagination button:first-child {
+    margin-right: 20px;
+
+}
+
+.pagination button:hover {
+    background-color: #1a2a2a;
+  }
+  
+
+h1 {
+    font-size: 35px;
+    padding-right: 15%;
+}
