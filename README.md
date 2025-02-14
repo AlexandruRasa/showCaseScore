@@ -17,5 +17,8 @@ Java, Spring Boot, JavaScript, React, MySQL
 
 ## Demo
 
- <video loop src="https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18"> video </video> 
+<video autoplay loop muted playsinline>
+  <source src="https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
