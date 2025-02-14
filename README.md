@@ -17,5 +17,5 @@ Java, Spring Boot, JavaScript, React, MySQL
 
 ## Demo
 
-https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18
+ <video loop src="https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18"> video </video> 
 
