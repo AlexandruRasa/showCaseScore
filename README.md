@@ -17,4 +17,4 @@ Java, Spring Boot, JavaScript, React, MySQL
 
 ## Demo
 
-![2024-05-15 15-55-57](https://github.com/AlexandruRasa/showCaseScore/assets/114824311/6857c3dd-8b98-4d4f-81a1-af2c011ffd5a)
+![2025-02-1410-22-42-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/89979d0c-7829-4091-bf26-640a0c23cf18)
