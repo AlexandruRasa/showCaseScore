@@ -15,7 +15,4 @@ Java, Spring Boot, JavaScript, React, MySQL
 
 ## Demo
 
-<video autoplay loop muted playsinline>
-  <source src="https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![Untitleddesign1-ezgif com-optimize+(2) (1)](https://github.com/user-attachments/assets/b3d37ac1-df1a-45d0-95b0-0126fc1cd9f2)
