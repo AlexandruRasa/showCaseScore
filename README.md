@@ -17,4 +17,5 @@ Java, Spring Boot, JavaScript, React, MySQL
 
 ## Demo
 
-![2025-02-1410-22-42-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/89979d0c-7829-4091-bf26-640a0c23cf18)
+https://github.com/user-attachments/assets/1783bc92-041e-45b0-8325-216896de3e18
+
